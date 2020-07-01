@@ -2422,11 +2422,7 @@ async function sync()  {
   }
 }
 
-try {
-  sync();
-} catch (error) {
-  core.setFailed(error.message);
-}
+sync().catch(error => core.setFailed(error.message));
 
 
 /***/ }),

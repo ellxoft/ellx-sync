@@ -132,8 +132,4 @@ async function sync()  {
   }
 }
 
-try {
-  await sync();
-} catch (error) {
-  core.setFailed(error.message);
-}
+sync().catch(error => core.setFailed(error.message));
