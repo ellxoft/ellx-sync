@@ -6,7 +6,7 @@ inputs:
     required: true
     default: ''
   ellx-url:
-    description: 'Ellx API URL'
+    description: 'Ellx URL'
     required: false
     default: 'https://api.ellx.io'
 runs:

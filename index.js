@@ -76,6 +76,7 @@ async function sync()  {
       hash: hashAndCache(path),
     }));
 
+  const authorization = `${owner},${repo.replace('/', '-')},${key}`;
   const acl = await getAcl();
 
   const res = await fetch(
