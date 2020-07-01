@@ -6,9 +6,13 @@ inputs:
     required: true
     default: ''
   ellx-url:
-    description: 'Ellx URL'
+    description: 'Ellx API URL'
     required: false
     default: 'https://api.ellx.io'
+  whatever:
+    description: 'Github token'
+    required: false
+    default: ''
 runs:
   using: 'node12'
   main: 'dist/index.js'
