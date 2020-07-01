@@ -101,8 +101,8 @@ async function sync()  {
 
   if (!res.ok) {
     const message = await res.json();
-    console.error(res.status, message.error ? message.error : message);
-    return;
+    core.setFailed(`Sync error: ${message.toString()}`);
+    return
   }
 
   const urls = await res.json();
