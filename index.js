@@ -47,7 +47,7 @@ async function getAcl() {
 
   console.log('TTTT');
 
-  const res = await fetch(`https://api.github.com/app`, {
+  const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
     headers: {
       authorization: `Bearer: ${token}`,
       'content-type': 'application/vnd.github.machine-man-preview+json',
