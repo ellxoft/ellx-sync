@@ -3,7 +3,6 @@ const process = require('process');
 const core = require('@actions/core');
 const fetch = require('node-fetch');
 const md5 = require('md5');
-const { POINT_CONVERSION_COMPRESSED } = require('constants');
 
 const walk = function(dir) {
   let results = [];
@@ -54,15 +53,12 @@ async function getAcl() {
 
   if (!res.ok) {
     const err = await res.json();
-    console.log(res, err, 'RES OK?');
     if (res.status === 404) return 'private';
 
     throw new Error(`ACL error: ${err.message}`);
   }
 
   const data = await res.json();
-
-  console.log('Repository data:', data);
 
   return data.private ? 'private' : 'public';
 }
@@ -84,7 +80,6 @@ async function sync()  {
 
   const acl = await getAcl();
 
-  console.log('authorization with: ', authorization, acl);
   const res = await fetch(
     server + `/sync/${repo}`,
     {
