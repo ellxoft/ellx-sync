@@ -3,6 +3,7 @@ const process = require('process');
 const core = require('@actions/core');
 const fetch = require('node-fetch');
 const md5 = require('md5');
+const { POINT_CONVERSION_COMPRESSED } = require('constants');
 
 const walk = function(dir) {
   let results = [];
@@ -44,16 +45,18 @@ function getContentType(id) {
 async function getAcl() {
   const token = core.getInput('github-token');
 
+  console.log(token, 'TTTT');
+
   const res = await fetch(`https://api.github.com/app`, {
     headers: {
       authorization: `Bearer: ${token}`,
-      'content-type': 'application/json',
+      'content-type': 'application/vnd.github.machine-man-preview+json',
     }
   });
 
   if (!res.ok) {
     const message = await res.json();
-    throw new Error(`ACL error ${message}`);
+    throw new Error(`ACL error ${message.toString()}`);
     return;
   }
 

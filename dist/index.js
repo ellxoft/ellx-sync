@@ -1993,6 +1993,13 @@ exports.FetchError = FetchError;
 
 /***/ }),
 
+/***/ 619:
+/***/ (function(module) {
+
+module.exports = require("constants");
+
+/***/ }),
+
 /***/ 622:
 /***/ (function(module) {
 
@@ -2286,6 +2293,7 @@ const process = __webpack_require__(765);
 const core = __webpack_require__(660);
 const fetch = __webpack_require__(618);
 const md5 = __webpack_require__(562);
+const { POINT_CONVERSION_COMPRESSED } = __webpack_require__(619);
 
 const walk = function(dir) {
   let results = [];
@@ -2327,16 +2335,18 @@ function getContentType(id) {
 async function getAcl() {
   const token = core.getInput('github-token');
 
+  console.log(token, 'TTTT');
+
   const res = await fetch(`https://api.github.com/app`, {
     headers: {
       authorization: `Bearer: ${token}`,
-      'content-type': 'application/json',
+      'content-type': 'application/vnd.github.machine-man-preview+json',
     }
   });
 
   if (!res.ok) {
     const message = await res.json();
-    throw new Error(`ACL error ${message}`);
+    throw new Error(`ACL error ${message.toString()}`);
     return;
   }
 
