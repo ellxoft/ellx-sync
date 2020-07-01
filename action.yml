@@ -9,8 +9,6 @@ inputs:
     required: false
     default: 'https://api.ellx.io'
 outputs:
-  status:
-    description: 'Job status'
   files:
     description: 'List of synced files'
 runs:

@@ -96,7 +96,7 @@ async function sync()  {
       'Synced following files successfully:\n',
     );
 
-    core.setOutput(urls.map(({ path }) => path.slice(1)));
+    core.setOutput('files', urls.map(({ path }) => path.slice(1)));
   } else {
     core.setFailed(
       'Error uploading files',
