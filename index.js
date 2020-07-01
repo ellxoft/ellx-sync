@@ -44,7 +44,7 @@ function getContentType(id) {
 async function getAcl() {
   const token = core.getInput('github-token');
 
-  console.log(token);
+  console.log(token, 'OTKTNNNENNN');
 
   const res = await fetch(`https://api.github.com/app`, {
     headers: {
