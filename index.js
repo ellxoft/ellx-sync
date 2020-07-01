@@ -39,7 +39,7 @@ function getContentType(id) {
   return 'text/plain';
 }
 
-async function sync(repo, server)  {
+async function sync()  {
   const repo = process.env.GITHUB_REPOSITORY;
   const project = repo.split('/')[0];
   const server = core.getInput('ellxUrl');
