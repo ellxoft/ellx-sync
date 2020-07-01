@@ -4,6 +4,7 @@ inputs:
   key:
     description: 'Secret key for the project'
     required: true
+    default: ''
   ellxUrl:
     description: 'Ellx API URL'
     required: false
