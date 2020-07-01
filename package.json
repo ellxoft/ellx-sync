@@ -1,0 +1,17 @@
+{
+  "name": "ellx-action",
+  "version": "0.0.1",
+  "description": "Sync Github repository with Ellx cloud",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Maxim Matyunin",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^4.0.0",
+    "md5": "^2.2.1",
+    "node-fetch": "^2.6.0"
+  }
+}
