@@ -78,8 +78,10 @@ async function sync()  {
 
   const authorization = `${project},${repo.replace('/', '-')},${key}`;
 
+
   const acl = await getAcl();
 
+  console.log('authorization with: ', authorization, acl);
   const res = await fetch(
     server + `/sync/${repo}`,
     {
