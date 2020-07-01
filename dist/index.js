@@ -2284,6 +2284,8 @@ function isSlowBuffer (obj) {
 const fs = __webpack_require__(747);
 const process = __webpack_require__(765);
 const core = __webpack_require__(660);
+const fetch = __webpack_require__(618);
+const md5 = __webpack_require__(562);
 
 const walk = function(dir) {
   let results = [];
@@ -2309,7 +2311,7 @@ function hashAndCache(p) {
 
   contents.set(serverPath(p), content);
 
-  return __webpack_require__(562)(content);
+  return md5(content);
 }
 
 function getContentType(id) {
@@ -2322,13 +2324,33 @@ function getContentType(id) {
   return 'text/plain';
 }
 
+async function getAcl() {
+  const token = core.getInput('github-token');
+
+  const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
+    headers: {
+      authorization: `Bearer: ${token}`,
+    }
+  });
+
+  if (!res.ok) {
+    const message = await res.json();
+    console.error(res.status, message.error ? message.error : message);
+    return;
+  }
+
+  const data = await res.json();
+
+  console.log('Repository data:', data);
+
+  return data.private ? 'private' : 'public';
+}
+
 async function sync()  {
   const repo = process.env.GITHUB_REPOSITORY;
-  const project = repo.split('/')[0];
-  const server = core.getInput('ellxUrl');
-  const key = core.getInput('key');
-
-  const fetch = __webpack_require__(618);
+  const project = repo.split('/')[1];
+  const server = core.getInput('ellx-url');
+  const key = core.getInput('ellx-key');
 
   const files = walk('.')
     .filter(name => !name.startsWith('./.git'))
@@ -2339,11 +2361,13 @@ async function sync()  {
 
   const authorization = `${project},${repo.replace('/', '-')},${key}`;
 
+  const acl = await getAcl();
+
   const res = await fetch(
     server + `/sync/${repo}`,
     {
       method: 'PUT',
-      body: JSON.stringify({ files, title: project, acl: 'public' }),
+      body: JSON.stringify({ files, title: project, acl }),
       // TODO: auth header from env
       // for now need to copy valid token from client
       headers: {
@@ -2368,7 +2392,7 @@ async function sync()  {
         body: contents.get(path),
         headers: {
           'Content-Type': getContentType(path),
-          'Cache-Control': 'max-age=31536000'
+          'Cache-Control': 'max-age=31536000' // TODO: fix for private projects
         },
       })
     )
@@ -2379,7 +2403,7 @@ async function sync()  {
       'Synced following files successfully:\n',
     );
 
-    core.setOutput(urls.map(({ path }) => path.slice(1)));
+    console.log(urls.map(({ path }) => path.slice(1)));
   } else {
     core.setFailed(
       'Error uploading files',

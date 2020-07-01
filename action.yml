@@ -5,13 +5,14 @@ inputs:
     description: 'Secret key for the project'
     required: true
     default: ''
-  ellxUrl:
+  ellx-url:
     description: 'Ellx API URL'
     required: false
     default: 'https://api.ellx.io'
-outputs:
-  files:
-    description: 'List of synced files'
+  github-token:
+    description: 'Github token (required to set proper ACL)'
+    required: true
+    default: ''
 runs:
   using: 'node12'
   main: 'dist/index.js'
