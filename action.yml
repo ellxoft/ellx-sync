@@ -1,7 +1,7 @@
 name: 'Ellx sync'
 description: 'Sync Github repo with Ellx cloud'
 inputs:
-  ellx-key:
+  key:
     description: 'Secret key for the project'
     required: true
     default: ''
