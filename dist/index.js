@@ -2393,8 +2393,8 @@ async function sync()  {
   );
 
   if (!res.ok) {
-    const message = await res.json();
-    throw new Error(`Sync error: ${message.toString()}`);
+    const error = await res.json();
+    throw new Error(`Sync error: ${error.message.toString()}`);
   }
 
   const urls = await res.json();
