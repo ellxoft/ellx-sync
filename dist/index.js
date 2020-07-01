@@ -1993,13 +1993,6 @@ exports.FetchError = FetchError;
 
 /***/ }),
 
-/***/ 619:
-/***/ (function(module) {
-
-module.exports = require("constants");
-
-/***/ }),
-
 /***/ 622:
 /***/ (function(module) {
 
@@ -2293,7 +2286,6 @@ const process = __webpack_require__(765);
 const core = __webpack_require__(660);
 const fetch = __webpack_require__(618);
 const md5 = __webpack_require__(562);
-const { POINT_CONVERSION_COMPRESSED } = __webpack_require__(619);
 
 const walk = function(dir) {
   let results = [];
@@ -2344,15 +2336,12 @@ async function getAcl() {
 
   if (!res.ok) {
     const err = await res.json();
-    console.log(res, err, 'RES OK?');
     if (res.status === 404) return 'private';
 
     throw new Error(`ACL error: ${err.message}`);
   }
 
   const data = await res.json();
-
-  console.log('Repository data:', data);
 
   return data.private ? 'private' : 'public';
 }
@@ -2374,7 +2363,6 @@ async function sync()  {
 
   const acl = await getAcl();
 
-  console.log('authorization with: ', authorization, acl);
   const res = await fetch(
     server + `/sync/${repo}`,
     {
