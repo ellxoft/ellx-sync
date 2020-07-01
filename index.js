@@ -50,12 +50,13 @@ async function getAcl() {
   const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
     headers: {
       authorization: `Bearer: ${token}`,
-      'content-type': 'application/vnd.github.machine-man-preview+json',
+      'content-type': 'application/vnd.github.nebula-preview+json',
     }
   });
 
   if (!res.ok) {
     const err = await res.json();
+    console.log(res, err);
     if (res.status === 404) return 'private';
 
     throw new Error(`ACL error: ${err.message}`);
