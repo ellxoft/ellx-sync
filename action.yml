@@ -9,10 +9,6 @@ inputs:
     description: 'Ellx API URL'
     required: false
     default: 'https://api.ellx.io'
-  github-token:
-    description: 'Github token'
-    required: false
-    default: ''
 runs:
   using: 'node12'
   main: 'dist/index.js'

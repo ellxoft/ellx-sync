@@ -42,11 +42,11 @@ function getContentType(id) {
 }
 
 async function getAcl() {
-  const token = core.getInput('github-token');
+  // const token = core.getInput('github-token');
 
   const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
     headers: {
-      authorization: `Bearer: ${token}`,
+      // authorization: `Bearer: ${token}`,
       'content-type': 'application/vnd.github.nebula-preview+json',
     }
   });
