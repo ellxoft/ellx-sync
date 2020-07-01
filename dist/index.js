@@ -2348,7 +2348,7 @@ async function getAcl() {
 
 async function sync()  {
   const repo = process.env.GITHUB_REPOSITORY;
-  const project = repo.split('/')[1];
+  const [owner, project] = repo.split('/');
   const server = core.getInput('ellx-url');
   const key = core.getInput('key');
 
@@ -2358,10 +2358,6 @@ async function sync()  {
       path: serverPath(path),
       hash: hashAndCache(path),
     }));
-
-  const authorization = `${project},${repo.replace('/', '-')},${key}`;
-
-  console.log(authorization, 'AUTHHHHH');
 
   const acl = await getAcl();
 
