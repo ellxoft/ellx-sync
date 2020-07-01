@@ -44,9 +44,12 @@ function getContentType(id) {
 async function getAcl() {
   const token = core.getInput('github-token');
 
-  const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
+  console.log(token);
+
+  const res = await fetch(`https://api.github.com/app`, {
     headers: {
       authorization: `Bearer: ${token}`,
+      'content-type': 'application/json',
     }
   });
 
