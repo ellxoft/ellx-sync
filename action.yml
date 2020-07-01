@@ -15,4 +15,4 @@ outputs:
     description: 'List of synced files'
 runs:
   using: 'node13'
-  main: 'index.js'
+  main: 'dist/index.js'

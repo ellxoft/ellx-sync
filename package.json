@@ -4,6 +4,7 @@
   "description": "Sync Github repository with Ellx cloud",
   "main": "index.js",
   "scripts": {
+    "build": "ncc build index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Maxim Matyunin",
