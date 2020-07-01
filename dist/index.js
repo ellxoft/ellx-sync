@@ -2346,7 +2346,7 @@ async function getAcl() {
 
   if (!res.ok) {
     const err = await res.json();
-    console.error(error);
+    console.error(err);
     throw new Error(`ACL error`);
   }
 
