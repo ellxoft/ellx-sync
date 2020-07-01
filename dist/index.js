@@ -2346,7 +2346,9 @@ async function getAcl() {
 
   if (!res.ok) {
     const err = await res.json();
-    throw new Error(`ACL error: ${err.message} ${token}`);
+    if (res.status === 404) return 'private';
+
+    throw new Error(`ACL error: ${err.message}`);
   }
 
   const data = await res.json();
