@@ -44,8 +44,6 @@ function getContentType(id) {
 async function getAcl() {
   const token = core.getInput('github-token');
 
-  console.log(token, 'OTKTNNNENNN');
-
   const res = await fetch(`https://api.github.com/app`, {
     headers: {
       authorization: `Bearer: ${token}`,
@@ -55,7 +53,7 @@ async function getAcl() {
 
   if (!res.ok) {
     const message = await res.json();
-    console.error(res.status, message.error ? message.error : message);
+    throw new Error(`ACL error ${message}`);
     return;
   }
 
@@ -101,8 +99,7 @@ async function sync()  {
 
   if (!res.ok) {
     const message = await res.json();
-    core.setFailed(`Sync error: ${message.toString()}`);
-    return
+    throw new Error(`Sync error: ${message.toString()}`);
   }
 
   const urls = await res.json();
@@ -127,9 +124,8 @@ async function sync()  {
 
     console.log(urls.map(({ path }) => path.slice(1)));
   } else {
-    core.setFailed(
-      'Error uploading files',
-      await Promise.all(uploads.map(async r => r.json()))
+    throw new Error(
+      `Error uploading files: ${uploads.filter(r => !r.ok).map(async r => r.json())}`
     );
   }
 }
