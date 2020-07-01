@@ -45,8 +45,6 @@ function getContentType(id) {
 async function getAcl() {
   const token = core.getInput('github-token');
 
-  console.log('TTTT');
-
   const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
     headers: {
       authorization: `Bearer: ${token}`,
@@ -56,7 +54,7 @@ async function getAcl() {
 
   if (!res.ok) {
     const err = await res.json();
-    console.log(res, err);
+    console.log(res, err, 'RES OK?');
     if (res.status === 404) return 'private';
 
     throw new Error(`ACL error: ${err.message}`);
@@ -73,7 +71,7 @@ async function sync()  {
   const repo = process.env.GITHUB_REPOSITORY;
   const project = repo.split('/')[1];
   const server = core.getInput('ellx-url');
-  const key = core.getInput('ellx-key');
+  const key = core.getInput('key');
 
   const files = walk('.')
     .filter(name => !name.startsWith('./.git'))
@@ -83,7 +81,6 @@ async function sync()  {
     }));
 
   const authorization = `${project},${repo.replace('/', '-')},${key}`;
-
 
   const acl = await getAcl();
 
