@@ -10,8 +10,8 @@ inputs:
     required: false
     default: 'https://api.ellx.io'
   github-token:
-    description: 'Github token (required to set proper ACL)'
-    required: true
+    description: 'Github token'
+    required: false
     default: ''
 runs:
   using: 'node12'
