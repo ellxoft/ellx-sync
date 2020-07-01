@@ -133,7 +133,7 @@ async function sync()  {
 }
 
 try {
-  sync();
+  await sync();
 } catch (error) {
   core.setFailed(error.message);
 }
