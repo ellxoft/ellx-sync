@@ -57,7 +57,6 @@ async function getAcl() {
   if (!res.ok) {
     const message = await res.json();
     throw new Error(`ACL error ${message.toString()}`);
-    return;
   }
 
   const data = await res.json();
