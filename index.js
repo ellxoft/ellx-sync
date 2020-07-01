@@ -104,7 +104,8 @@ async function sync()  {
 
   if (!res.ok) {
     const error = await res.json();
-    throw new Error(`Sync error: ${error.message.toString()}`);
+    console.log(error);
+    throw new Error(`Sync error`);
   }
 
   const urls = await res.json();
