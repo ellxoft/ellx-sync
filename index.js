@@ -145,6 +145,7 @@ async function sync() {
     console.log(error);
     throw new Error('Sync error');
   }
+  console.log(res);
 }
 
 sync().catch(error => core.setFailed(error.message));
