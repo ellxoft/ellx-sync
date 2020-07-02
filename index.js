@@ -132,9 +132,21 @@ async function sync() {
   const server = core.getInput('ellx-url');
   const token = core.getInput('github-token');
 
+  const resTag = await fetch(`https://api.github.com/repos/${repo}/git/matching-refs/heads/dev`, {
+    headers: {
+      authorization: `Bearer ${ token }`
+    }
+  });
+
+  if (!resTag.ok) {
+    throw new Error(resTag.statusText);
+  }
+
+  const tag = await resTag.json();
+
   const res = await fetch(server, {
     method: 'POST',
-    body: JSON.stringify({ repo, token }),
+    body: JSON.stringify({ repo, token, tag }),
     headers: {
       'Content-Type': 'application/json',
     }
