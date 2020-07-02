@@ -71,6 +71,29 @@ module.exports = require("os");
 // const process = require('process');
 const core = __webpack_require__(470);
 const fetch = __webpack_require__(454);
+
+const GITHUB_API = 'https://api.github.com';
+
+const xhr = (baseUrl, headers) => Object.fromEntries(['get', 'put', 'post', 'delete', 'patch']
+  .map(verb => [verb, async (url, body) => {
+    const res = await fetch(baseUrl + url, {
+      method: verb.toUpperCase(),
+      body: body && JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(res.statusText);
+    }
+
+    return res.json();
+  }])
+);
+
+
 // const md5 = require('md5');
 
 // const walk = function(dir) {
@@ -198,35 +221,27 @@ const fetch = __webpack_require__(454);
 
 async function sync() {
   const repo = process.env.GITHUB_REPOSITORY;
-  const server = core.getInput('ellx-url');
+  const ellxUrl = core.getInput('ellx-url');
   const token = core.getInput('github-token');
 
-  const resTag = await fetch(`https://api.github.com/repos/${repo}/git/matching-refs/heads/dev`, {
-    headers: {
-      authorization: `Bearer ${ token }`
-    }
+  const ghApi = xhr(GITHUB_API, {
+    authorization: `Bearer ${ token }`
   });
 
-  if (!resTag.ok) {
-    throw new Error(resTag.statusText);
-  }
+  const ellxApi = xhr(ellxUrl);
 
-  const tag = await resTag.json();
+  // Check repo visibility, master sha, and whether we have ellx_latest tag already
+  const [meta, master, ellxTag] = await Promise.all([
+    ghApi.get(`/repos/${repo}`),
+    ghApi.get(`/repos/${repo}/git/matching-refs/heads/master`),
+    ghApi.get(`/repos/${repo}/git/matching-refs/tags/ellx_latest`)
+  ]);
 
-  const res = await fetch(server, {
-    method: 'POST',
-    body: JSON.stringify({ repo, token, tag }),
-    headers: {
-      'Content-Type': 'application/json',
-    }
+  const res = await ellxApi.post('/', {
+    repo, token, meta, master, ellxTag
   });
 
-  if (!res.ok) {
-    const error = await res.json();
-    console.log(error);
-    throw new Error('Sync error');
-  }
-  console.log(res);
+  core.info(res);
 }
 
 sync().catch(error => core.setFailed(error.message));
