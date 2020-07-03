@@ -169,10 +169,15 @@ async function sync() {
   ]);
 
   const res = await ellxApi.post('/', {
-    repo, token, meta, master, ellxTag
+    repo,
+    token,
+    acl: meta.private ? 'private' : 'public',
+    description: meta.description,
+    master: master[0] && master[0].object.sha,
+    ellxTag: ellxTag[0] && ellxTag[0].object.sha
   });
 
-  core.info(res);
+  core.info(res.success || res.error);
 }
 
 sync().catch(error => core.setFailed(error.message));
