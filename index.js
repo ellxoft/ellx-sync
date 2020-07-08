@@ -52,6 +52,7 @@ function getContentType(id) {
 
 async function sync() {
   const repo = process.env.GITHUB_REPOSITORY;
+  const targetSha = process.env.GITHUB_SHA;
   const ellxUrl = core.getInput('ellx-url');
   const token = core.getInput('github-token');
 
@@ -63,10 +64,9 @@ async function sync() {
 
   const ellxApi = xhr(ellxUrl);
 
-  // Check repo visibility, master sha, and whether we have ellx_latest tag already
-  const [meta, master, ellxTag] = await Promise.all([
+  // Check repo visibility, and whether we have ellx_latest tag already
+  const [meta, ellxTag] = await Promise.all([
     ghApi.get(`/repos/${repo}`),
-    ghApi.get(`/repos/${repo}/git/matching-refs/heads/master`),
     ghApi.get(`/repos/${repo}/git/matching-refs/tags/ellx_latest`)
   ]);
 
@@ -75,7 +75,7 @@ async function sync() {
     token,
     acl: meta.private ? 'private' : 'public',
     description: meta.description,
-    master: master[0] && master[0].object.sha,
+    targetSha,
     ellxTag: ellxTag[0] && ellxTag[0].object.sha,
     files
   });
