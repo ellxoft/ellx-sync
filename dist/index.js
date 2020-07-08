@@ -69,6 +69,7 @@ module.exports = require("os");
 
 const child_process = __webpack_require__(129);
 const process = __webpack_require__(765);
+const { readFile } = __webpack_require__(747).promises;
 
 const core = __webpack_require__(470);
 const fetch = __webpack_require__(454);
@@ -108,82 +109,15 @@ function repoFiles() {
     });
 }
 
-
-// function getContentType(id) {
-//   if (/\.(js|ellx)$/.test(id)) {
-//     return 'text/javascript';
-//   }
-//   if (/\.(md)$/.test(id)) {
-//     return 'text/plain';
-//   }
-//   return 'text/plain';
-// }
-
-
-
-// async function sync()  {
-//   const repo = process.env.GITHUB_REPOSITORY;
-//   const [owner, project] = repo.split('/');
-//   const server = core.getInput('ellx-url');
-//   const key = core.getInput('key');
-
-//   const files = walk('.')
-//     .filter(name => !name.startsWith('./.git'))
-//     .map(path => ({
-//       path: serverPath(path),
-//       hash: hashAndCache(path),
-//     }));
-
-//   const authorization = `${owner},${repo.replace('/', '-')},${key}`;
-//   const acl = await getAcl();
-
-//   const res = await fetch(
-//     server + `/sync/${repo}`,
-//     {
-//       method: 'PUT',
-//       body: JSON.stringify({ files, title: project, acl }),
-//       // TODO: auth header from env
-//       // for now need to copy valid token from client
-//       headers: {
-//         authorization,
-//         'Content-Type': 'application/json',
-//       },
-//     }
-//   );
-
-//   if (!res.ok) {
-//     const error = await res.json();
-//     console.log(error);
-//     throw new Error(`Sync error`);
-//   }
-
-//   const urls = await res.json();
-
-//   const uploads = await Promise.all(
-//     urls.map(
-//       async ({ path, uploadUrl }) => fetch(uploadUrl, {
-//         method: 'PUT',
-//         body: contents.get(path),
-//         headers: {
-//           'Content-Type': getContentType(path),
-//           'Cache-Control': 'max-age=31536000' // TODO: fix for private projects
-//         },
-//       })
-//     )
-//   );
-
-//   if (uploads.every(i => i.ok)) {
-//     console.log(
-//       'Synced following files successfully:\n',
-//     );
-
-//     console.log(urls.map(({ path }) => path.slice(1)));
-//   } else {
-//     throw new Error(
-//       `Error uploading files: ${uploads.filter(r => !r.ok).map(async r => r.json())}`
-//     );
-//   }
-// }
+function getContentType(id) {
+  if (/\.(js|ellx)$/.test(id)) {
+    return 'text/javascript';
+  }
+  if (/\.(md)$/.test(id)) {
+    return 'text/plain';
+  }
+  return 'text/plain';
+}
 
 async function sync() {
   const repo = process.env.GITHUB_REPOSITORY;
@@ -205,7 +139,7 @@ async function sync() {
     ghApi.get(`/repos/${repo}/git/matching-refs/tags/ellx_latest`)
   ]);
 
-  const res = await ellxApi.put('/sync/' + repo, {
+  const toUpload = await ellxApi.put('/sync/' + repo, {
     repo,
     token,
     acl: meta.private ? 'private' : 'public',
@@ -215,7 +149,29 @@ async function sync() {
     files
   });
 
-  core.info(res.success || res.error);
+  const uploads = await Promise.all(
+    toUpload.map(
+      async ({ path, uploadUrl }) => fetch(uploadUrl, {
+        method: 'PUT',
+        body: await readFile('.' + path, 'utf8'),
+        headers: {
+          'Content-Type': getContentType(path),
+          'Cache-Control': 'max-age=31536000' // TODO: fix for private projects
+        },
+      })
+    )
+  );
+
+  if (uploads.every(i => i.ok)) {
+    core.info(['Successfully synced']
+      .concat(toUpload.map(({ path }) => path.slice(1)))
+      .join('\n')
+    );
+  }
+  else {
+    const errIdx = uploads.findIndex(r => !r.ok);
+    core.error(`Failed to upload ${toUploads[errIdx].path.slice(1)}: ${r.statusText}`);
+  }
 }
 
 sync().catch(error => core.setFailed(error.message));
@@ -2233,6 +2189,13 @@ module.exports = require("http");
 /***/ (function(module) {
 
 module.exports = require("path");
+
+/***/ }),
+
+/***/ 747:
+/***/ (function(module) {
+
+module.exports = require("fs");
 
 /***/ }),
 
