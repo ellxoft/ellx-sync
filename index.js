@@ -1,5 +1,6 @@
-// const fs = require('fs');
-// const process = require('process');
+const child_process = require('child_process');
+const process = require('process');
+
 const core = require('@actions/core');
 const fetch = require('node-fetch');
 
@@ -24,35 +25,20 @@ const xhr = (baseUrl, headers) => Object.fromEntries(['get', 'put', 'post', 'del
   }])
 );
 
+function repoFiles() {
+  return child_process.execSync('md5sum $(find . -type f ! -path "*/.*")')
+    .toString()
+    .trim()
+    .split('\n')
+    .map(line => {
+      const [hash, p] = line.trim().split(/\s+/);
+      return {
+        path: p.slice(1),
+        hash
+      };
+    });
+}
 
-// const md5 = require('md5');
-
-// const walk = function(dir) {
-//   let results = [];
-//   const list = fs.readdirSync(dir);
-//   list.forEach(function(file) {
-//       file = dir + '/' + file;
-//       const stat = fs.statSync(file);
-//       if (stat && stat.isDirectory()) {
-//           results = results.concat(walk(file));
-//       } else {
-//           results.push(file);
-//       }
-//   });
-//   return results;
-// };
-
-// const contents = new Map();
-
-// const serverPath = p => '/' + p.slice(2);
-
-// function hashAndCache(p) {
-//   const content = fs.readFileSync(p, 'UTF-8');
-
-//   contents.set(serverPath(p), content);
-
-//   return md5(content);
-// }
 
 // function getContentType(id) {
 //   if (/\.(js|ellx)$/.test(id)) {
@@ -64,27 +50,7 @@ const xhr = (baseUrl, headers) => Object.fromEntries(['get', 'put', 'post', 'del
 //   return 'text/plain';
 // }
 
-// async function getAcl() {
-//   // const token = core.getInput('github-token');
 
-//   const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
-//     headers: {
-//       // authorization: `Bearer: ${token}`,
-//       'content-type': 'application/vnd.github.nebula-preview+json',
-//     }
-//   });
-
-//   if (!res.ok) {
-//     const err = await res.json();
-//     if (res.status === 404) return 'private';
-
-//     throw new Error(`ACL error: ${err.message}`);
-//   }
-
-//   const data = await res.json();
-
-//   return data.private ? 'private' : 'public';
-// }
 
 // async function sync()  {
 //   const repo = process.env.GITHUB_REPOSITORY;
@@ -152,8 +118,10 @@ const xhr = (baseUrl, headers) => Object.fromEntries(['get', 'put', 'post', 'del
 
 async function sync() {
   const repo = process.env.GITHUB_REPOSITORY;
-  const ellxUrl = core.getInput('ellx-url');
+  const ellxUrl = core.getInput('ellx-url') + '/' + repo;
   const token = core.getInput('github-token');
+
+  const files = repoFiles();
 
   const ghApi = xhr(GITHUB_API, {
     authorization: `Bearer ${ token }`
@@ -174,7 +142,8 @@ async function sync() {
     acl: meta.private ? 'private' : 'public',
     description: meta.description,
     master: master[0] && master[0].object.sha,
-    ellxTag: ellxTag[0] && ellxTag[0].object.sha
+    ellxTag: ellxTag[0] && ellxTag[0].object.sha,
+    files
   });
 
   core.info(res.success || res.error);
