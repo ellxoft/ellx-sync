@@ -7,8 +7,8 @@ inputs:
     default: 'https://api.ellx.io'
   github-token:
     description: 'Github token'
-    required: false
-    default: 'Whoops, no token'
+    required: true
+    default: ''
 runs:
   using: 'node12'
   main: 'dist/index.js'
