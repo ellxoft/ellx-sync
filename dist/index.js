@@ -187,7 +187,7 @@ function repoFiles() {
 
 async function sync() {
   const repo = process.env.GITHUB_REPOSITORY;
-  const ellxUrl = core.getInput('ellx-url') + '/' + repo;
+  const ellxUrl = core.getInput('ellx-url');
   const token = core.getInput('github-token');
 
   const files = repoFiles();
@@ -205,7 +205,7 @@ async function sync() {
     ghApi.get(`/repos/${repo}/git/matching-refs/tags/ellx_latest`)
   ]);
 
-  const res = await ellxApi.post('/', {
+  const res = await ellxApi.put('/sync/' + repo, {
     repo,
     token,
     acl: meta.private ? 'private' : 'public',
