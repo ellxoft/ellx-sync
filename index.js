@@ -1,34 +1,43 @@
-const fs = require('fs');
+const child_process = require('child_process');
 const process = require('process');
+const { readFile } = require('fs').promises;
+
 const core = require('@actions/core');
 const fetch = require('node-fetch');
-const md5 = require('md5');
 
-const walk = function(dir) {
-  let results = [];
-  const list = fs.readdirSync(dir);
-  list.forEach(function(file) {
-      file = dir + '/' + file;
-      const stat = fs.statSync(file);
-      if (stat && stat.isDirectory()) {
-          results = results.concat(walk(file));
-      } else {
-          results.push(file);
-      }
-  });
-  return results;
-};
+const GITHUB_API = 'https://api.github.com';
 
-const contents = new Map();
+const xhr = (baseUrl, headers) => Object.fromEntries(['get', 'put', 'post', 'delete', 'patch']
+  .map(verb => [verb, async (url, body) => {
+    const res = await fetch(baseUrl + url, {
+      method: verb.toUpperCase(),
+      body: body && JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+    });
 
-const serverPath = p => '/' + p.slice(2);
+    if (!res.ok) {
+      throw new Error(res.statusText);
+    }
 
-function hashAndCache(p) {
-  const content = fs.readFileSync(p, 'UTF-8');
+    return res.json();
+  }])
+);
 
-  contents.set(serverPath(p), content);
-
-  return md5(content);
+function repoFiles() {
+  return child_process.execSync('md5sum $(find . -type f ! -path "*/.*")')
+    .toString()
+    .trim()
+    .split('\n')
+    .map(line => {
+      const [hash, p] = line.trim().split(/\s+/);
+      return {
+        path: p.slice(1),
+        hash
+      };
+    });
 }
 
 function getContentType(id) {
@@ -41,71 +50,41 @@ function getContentType(id) {
   return 'text/plain';
 }
 
-async function getAcl() {
-  // const token = core.getInput('github-token');
+async function sync() {
+  const repo = process.env.GITHUB_REPOSITORY;
+  const ellxUrl = core.getInput('ellx-url');
+  const token = core.getInput('github-token');
 
-  const res = await fetch(`https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`, {
-    headers: {
-      // authorization: `Bearer: ${token}`,
-      'content-type': 'application/vnd.github.nebula-preview+json',
-    }
+  const files = repoFiles();
+
+  const ghApi = xhr(GITHUB_API, {
+    authorization: `Bearer ${ token }`
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    if (res.status === 404) return 'private';
+  const ellxApi = xhr(ellxUrl);
 
-    throw new Error(`ACL error: ${err.message}`);
-  }
+  // Check repo visibility, master sha, and whether we have ellx_latest tag already
+  const [meta, master, ellxTag] = await Promise.all([
+    ghApi.get(`/repos/${repo}`),
+    ghApi.get(`/repos/${repo}/git/matching-refs/heads/master`),
+    ghApi.get(`/repos/${repo}/git/matching-refs/tags/ellx_latest`)
+  ]);
 
-  const data = await res.json();
-
-  return data.private ? 'private' : 'public';
-}
-
-async function sync()  {
-  const repo = process.env.GITHUB_REPOSITORY;
-  const [owner, project] = repo.split('/');
-  const server = core.getInput('ellx-url');
-  const key = core.getInput('key');
-
-  const files = walk('.')
-    .filter(name => !name.startsWith('./.git'))
-    .map(path => ({
-      path: serverPath(path),
-      hash: hashAndCache(path),
-    }));
-
-  const authorization = `${owner},${repo.replace('/', '-')},${key}`;
-  const acl = await getAcl();
-
-  const res = await fetch(
-    server + `/sync/${repo}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify({ files, title: project, acl }),
-      // TODO: auth header from env
-      // for now need to copy valid token from client
-      headers: {
-        authorization,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-
-  if (!res.ok) {
-    const error = await res.json();
-    console.log(error);
-    throw new Error(`Sync error`);
-  }
-
-  const urls = await res.json();
+  const toUpload = await ellxApi.put('/sync/' + repo, {
+    repo,
+    token,
+    acl: meta.private ? 'private' : 'public',
+    description: meta.description,
+    master: master[0] && master[0].object.sha,
+    ellxTag: ellxTag[0] && ellxTag[0].object.sha,
+    files
+  });
 
   const uploads = await Promise.all(
-    urls.map(
+    toUpload.map(
       async ({ path, uploadUrl }) => fetch(uploadUrl, {
         method: 'PUT',
-        body: contents.get(path),
+        body: await readFile('.' + path, 'utf8'),
         headers: {
           'Content-Type': getContentType(path),
           'Cache-Control': 'max-age=31536000' // TODO: fix for private projects
@@ -115,15 +94,14 @@ async function sync()  {
   );
 
   if (uploads.every(i => i.ok)) {
-    console.log(
-      'Synced following files successfully:\n',
+    core.info(['Successfully synced']
+      .concat(toUpload.map(({ path }) => path.slice(1)))
+      .join('\n')
     );
-
-    console.log(urls.map(({ path }) => path.slice(1)));
-  } else {
-    throw new Error(
-      `Error uploading files: ${uploads.filter(r => !r.ok).map(async r => r.json())}`
-    );
+  }
+  else {
+    const errIdx = uploads.findIndex(r => !r.ok);
+    core.error(`Failed to upload ${toUploads[errIdx].path.slice(1)}: ${r.statusText}`);
   }
 }
 

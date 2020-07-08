@@ -1,17 +1,13 @@
 name: 'Ellx sync'
 description: 'Sync Github repo with Ellx cloud'
 inputs:
-  key:
-    description: 'Secret key for the project'
-    required: true
-    default: ''
   ellx-url:
     description: 'Ellx API URL'
     required: false
     default: 'https://api.ellx.io'
-  whatever:
+  github-token:
     description: 'Github token'
-    required: false
+    required: true
     default: ''
 runs:
   using: 'node12'
