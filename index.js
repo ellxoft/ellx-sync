@@ -53,8 +53,13 @@ function getContentType(id) {
 async function sync() {
   const repo = process.env.GITHUB_REPOSITORY;
   const targetSha = process.env.GITHUB_SHA;
+  const currentRef = process.env.GITHUB_REF;
   const ellxUrl = core.getInput('ellx-url');
   const token = core.getInput('github-token');
+
+  const tagName = 'ellx-sync/' + (/^refs\/heads\/(.+)/.exec(currentRef) || [, 'latest'])[1];
+  const releaseVersion = (/^refs\/heads\/release\/(.+)/.exec(currentRef) || [])[1];
+  const suffix = releaseVersion ? '@' + releaseVersion : '';
 
   const files = repoFiles();
 
@@ -64,19 +69,20 @@ async function sync() {
 
   const ellxApi = xhr(ellxUrl);
 
-  // Check repo visibility, and whether we have ellx_latest tag already
+  // Check repo visibility, and whether we have the tag already
   const [meta, ellxTag] = await Promise.all([
     ghApi.get(`/repos/${repo}`),
-    ghApi.get(`/repos/${repo}/git/matching-refs/tags/ellx_latest`)
+    ghApi.get(`/repos/${repo}/git/matching-refs/tags/${tagName}`)
   ]);
 
-  const toUpload = await ellxApi.put('/sync/' + repo, {
+  const toUpload = await ellxApi.put('/sync/' + repo + suffix, {
     repo,
     token,
     acl: meta.private ? 'private' : 'public',
     description: meta.description,
     targetSha,
-    ellxTag: ellxTag[0] && ellxTag[0].object.sha,
+    tagName,
+    currentSha: ellxTag[0] && ellxTag[0].object.sha,
     files
   });
 
